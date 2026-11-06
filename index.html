@@ -939,30 +939,47 @@
           }
         ));
 
-        // 4. Sekat Horizontal (3 keping panjang @ 32 x 8 cm) -> Direbahkan rata berurutan di bawah
+        // 4. Sekat Horizontal: baris 1 & 2 dipecah jadi kiri/kanan (16 x 8 cm) agar tidak menembus sekat vertikal tengah.
+        //    Sekat batas gabungan (32 x 8 cm) utuh karena hanya menempel di ujung sekat vertikal (sambungan T).
         const zDivs = [-8.0, 0.0, 8.0];
+        const halfColWNE = (L - 3 * T) / 2;
         zDivs.forEach((zVal, idx) => {
-          const isFrontMergeBorder = idx === 2;
           const flatZRow = W / 2 + H + 11.5 + idx * (H + 2.8);
-          boxGroup.add(createCardboardPiece(
-            isFrontMergeBorder
-              ? 'Sekat Horizontal Utama (Batas Kompartemen Gabungan)'
-              : `Sekat Horizontal Baris #${idx + 1}`,
-            [L - 2 * T, H * 0.96, T],
-            [0, 0, zVal],
-            {
-              shortTitle: isFrontMergeBorder ? 'SEKAT BATAS GABUNGAN' : `SEKAT BARIS #${idx + 1}`,
-              cutoutDim: '32 × 8 cm',
-              dimensions: '32 × 8 cm (Dalam: 31.3 × 7.7 cm)',
-              role: isFrontMergeBorder ? 'Batas Ruang Gabungan 32 × 8 cm' : 'Sekat Pembatas Baris',
-              description: isFrontMergeBorder
-                ? 'Potongan sekat penuh 32 × 8 cm yang membatasi 6 slot standar dengan 1 slot gabungan di depan. Saat dibongkar, rebah rata menghadap ke atas.'
-                : 'Potongan sekat pembatas baris ukuran 32 × 8 cm. Saat dibongkar, rebah rata menghadap ke atas.',
-              capacity: '1 Pcs dari 3 Sekat Panjang (32 × 8 cm)',
-              flatPos: [0, flatY, flatZRow],
-              flatRot: [Math.PI / 2, 0, 0]
-            }
-          ));
+          if (idx === 2) {
+            boxGroup.add(createCardboardPiece(
+              'Sekat Horizontal Utama (Batas Kompartemen Gabungan)',
+              [L - 2 * T, H * 0.96, T],
+              [0, 0, zVal],
+              {
+                shortTitle: 'SEKAT BATAS GABUNGAN',
+                cutoutDim: '32 × 8 cm',
+                dimensions: '32 × 8 cm (Dalam: 31.3 × 7.7 cm)',
+                role: 'Batas Ruang Gabungan 32 × 8 cm',
+                description: 'Potongan sekat penuh 32 × 8 cm yang membatasi 6 slot standar dengan 1 slot gabungan di depan. Saat dibongkar, rebah rata menghadap ke atas.',
+                capacity: '1 Pcs (32 × 8 cm)',
+                flatPos: [0, flatY, flatZRow],
+                flatRot: [Math.PI / 2, 0, 0]
+              }
+            ));
+          } else {
+            [['Kiri', -1], ['Kanan', 1]].forEach(([side, sgn]) => {
+              boxGroup.add(createCardboardPiece(
+                `Sekat Horizontal ${side} Baris #${idx + 1}`,
+                [halfColWNE, H * 0.96, T],
+                [sgn * (halfColWNE / 2 + T / 2), 0, zVal],
+                {
+                  shortTitle: `SEKAT ${side.toUpperCase()} #${idx + 1}`,
+                  cutoutDim: '16 × 8 cm',
+                  dimensions: '16 × 8 cm (Bersih: 15.5 × 7.7 cm)',
+                  role: `Sekat Pembatas Baris ${side} #${idx + 1}`,
+                  description: `Potongan sekat pembatas baris ukuran 16 × 8 cm (${side} #${idx + 1}). Dipasang di sisi ${side.toLowerCase()} sekat vertikal tengah sehingga tidak saling menembus. Saat dibongkar, rebah rata menghadap ke atas.`,
+                  capacity: '1 Pcs dari 4 Sekat (16 × 8 cm)',
+                  flatPos: [sgn * 9.5, flatY, flatZRow],
+                  flatRot: [Math.PI / 2, 0, 0]
+                }
+              ));
+            });
+          }
         });
 
         // 5. Sekat Vertikal Tengah (HANYA 24 x 8 cm untuk 3 baris belakang) -> Direbahkan rata
