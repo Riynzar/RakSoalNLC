@@ -444,7 +444,7 @@
     function getOuterWrapMaterial(mode) {
       const isEss = mode === 'essential';
       return new THREE.MeshStandardMaterial({
-        map: isEss ? greenWrapTexture : redWrapTexture,
+        map: isEss ? redWrapTexture : greenWrapTexture,
         roughness: 0.65,
         metalness: 0.02,
         color: 0xffffff
@@ -642,24 +642,24 @@
       if (mode === 'essential') {
         // ====================================================
         // ESSENTIAL: 32 x 24 x 8 cm (6 Bagian: Hidrasi, Nutrisi, Proteksi)
-        // Bagian Luar Ditempel Kertas Warna HIJAU
+        // Bagian Luar Ditempel Kertas Warna MERAH
         // ====================================================
         const L = 32.0;
         const W = 24.0;
 
-        // 1. Alas Kardus (32 x 24 cm) -> Sisi bawah (-Y, index 3) dilapisi kertas Hijau
+        // 1. Alas Kardus (32 x 24 cm) -> Sisi bawah (-Y, index 3) dilapisi kertas Merah
         boxGroup.add(createCardboardPiece(
-          'Alas Bawah Kardus (Luar Berlapis Kertas Hijau)',
+          'Alas Bawah Kardus (Luar Berlapis Kertas Merah)',
           [L, T, W],
           [0, -H / 2 + T / 2, 0],
           {
             shortTitle: 'ALAS UTAMA',
             cutoutDim: '32 × 24 cm',
-            badge: 'ALAS LUAR (HIJAU - ESSENTIAL)',
+            badge: 'ALAS LUAR (MERAH - ESSENTIAL)',
             dimensions: '32 × 24 cm',
-            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Bawah)',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Bawah)',
             role: 'Alas Utama (6 Kompartemen)',
-            description: 'Lembaran dasar kardus ukuran 32 × 24 cm. Bagian bawah luar ditempel kertas warna HIJAU sebagai penanda kategori Essential, sedangkan sisi atas dalam tetap kardus coklat.',
+            description: 'Lembaran dasar kardus ukuran 32 × 24 cm. Bagian bawah luar ditempel kertas warna MERAH sebagai penanda kategori Essential, sedangkan sisi atas dalam tetap kardus coklat.',
             capacity: '1 Pcs (32 × 24 cm)',
             outerFaces: [3], // 3 = Bottom (-Y)
             wrapMode: 'essential',
@@ -670,17 +670,17 @@
 
         // 2. Dinding Samping Kiri & Kanan (24 x 8 cm) -> Rebahkan 90 derajat ke kiri & kanan hingga tidur rata
         boxGroup.add(createCardboardPiece(
-          'Dinding Samping Kiri (Luar Berlapis Kertas Hijau)',
+          'Dinding Samping Kiri (Luar Berlapis Kertas Merah)',
           [T, H, W],
           [-L / 2 + T / 2, 0, 0],
           {
             shortTitle: 'DINDING KIRI',
             cutoutDim: '24 × 8 cm',
-            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            badge: 'DINDING LUAR (MERAH - ESSENTIAL)',
             dimensions: '24 × 8 cm',
-            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
             role: 'Dinding Luar Sisi Kiri',
-            description: 'Potongan dinding samping kiri (24 × 8 cm). Saat dibongkar, terlihat sebagai kepingan persegi panjang datar. Sisi bawahnya berlapis kertas HIJAU dan sisi atasnya kardus coklat.',
+            description: 'Potongan dinding samping kiri (24 × 8 cm). Saat dibongkar, terlihat sebagai kepingan persegi panjang datar. Sisi bawahnya berlapis kertas MERAH dan sisi atasnya kardus coklat.',
             capacity: '1 Pcs (24 × 8 cm)',
             outerFaces: [1], // 1 = Left (-X)
             wrapMode: 'essential',
@@ -689,17 +689,17 @@
           }
         ));
         boxGroup.add(createCardboardPiece(
-          'Dinding Samping Kanan (Luar Berlapis Kertas Hijau)',
+          'Dinding Samping Kanan (Luar Berlapis Kertas Merah)',
           [T, H, W],
           [L / 2 - T / 2, 0, 0],
           {
             shortTitle: 'DINDING KANAN',
             cutoutDim: '24 × 8 cm',
-            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            badge: 'DINDING LUAR (MERAH - ESSENTIAL)',
             dimensions: '24 × 8 cm',
-            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
             role: 'Dinding Luar Sisi Kanan',
-            description: 'Potongan dinding samping kanan (24 × 8 cm). Saat dibongkar, terlihat sebagai kepingan persegi panjang datar. Sisi bawahnya berlapis kertas HIJAU dan sisi atasnya kardus coklat.',
+            description: 'Potongan dinding samping kanan (24 × 8 cm). Saat dibongkar, terlihat sebagai kepingan persegi panjang datar. Sisi bawahnya berlapis kertas MERAH dan sisi atasnya kardus coklat.',
             capacity: '1 Pcs (24 × 8 cm)',
             outerFaces: [0], // 0 = Right (+X)
             wrapMode: 'essential',
@@ -710,15 +710,15 @@
 
         // 3. Dinding Depan & Belakang (32 x 8 cm) -> Rebahkan 90 derajat ke depan & belakang hingga tidur rata
         boxGroup.add(createCardboardPiece(
-          'Dinding Luar Depan (Luar Berlapis Kertas Hijau)',
+          'Dinding Luar Depan (Luar Berlapis Kertas Merah)',
           [L - 2 * T, H, T],
           [0, 0, W / 2 - T / 2],
           {
             shortTitle: 'DINDING DEPAN',
             cutoutDim: '32 × 8 cm',
-            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            badge: 'DINDING LUAR (MERAH - ESSENTIAL)',
             dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
-            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
             role: 'Dinding Luar Bagian Depan',
             description: 'Potongan dinding depan sepanjang 32 × 8 cm. Saat dibongkar, direbahkan rata menghadap ke atas di sisi bawah/depan alas.',
             capacity: '1 Pcs (32 × 8 cm)',
@@ -729,15 +729,15 @@
           }
         ));
         boxGroup.add(createCardboardPiece(
-          'Dinding Luar Belakang (Luar Berlapis Kertas Hijau)',
+          'Dinding Luar Belakang (Luar Berlapis Kertas Merah)',
           [L - 2 * T, H, T],
           [0, 0, -W / 2 + T / 2],
           {
             shortTitle: 'DINDING BELAKANG',
             cutoutDim: '32 × 8 cm',
-            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            badge: 'DINDING LUAR (MERAH - ESSENTIAL)',
             dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
-            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
             role: 'Dinding Luar Bagian Belakang',
             description: 'Potongan dinding belakang sepanjang 32 × 8 cm. Saat dibongkar, direbahkan rata menghadap ke atas di sisi atas/belakang alas.',
             capacity: '1 Pcs (32 × 8 cm)',
@@ -833,24 +833,24 @@
       } else {
         // ====================================================
         // NON-ESSENTIAL: 32 x 32 x 8 cm (7 Bagian untuk 1 Kategori: Lilin / Tas / Map)
-        // Bagian Luar Ditempel Kertas Warna MERAH
+        // Bagian Luar Ditempel Kertas Warna HIJAU
         // ====================================================
         const L = 32.0;
         const W = 32.0;
 
-        // 1. Alas Bawah Kardus (32 x 32 cm) -> Sisi bawah (-Y, index 3) dilapisi kertas Merah
+        // 1. Alas Bawah Kardus (32 x 32 cm) -> Sisi bawah (-Y, index 3) dilapisi kertas Hijau
         boxGroup.add(createCardboardPiece(
-          'Alas Bawah Kardus (Luar Berlapis Kertas Merah)',
+          'Alas Bawah Kardus (Luar Berlapis Kertas Hijau)',
           [L, T, W],
           [0, -H / 2 + T / 2, 0],
           {
             shortTitle: 'ALAS UTAMA',
             cutoutDim: '32 × 32 cm',
-            badge: 'ALAS LUAR (MERAH - NON-ESSENTIAL)',
+            badge: 'ALAS LUAR (HIJAU - NON-ESSENTIAL)',
             dimensions: '32 × 32 cm',
-            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Bawah)',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Bawah)',
             role: 'Alas Utama Persegi (7 Kompartemen)',
-            description: 'Alas kardus 32 × 32 cm untuk wadah Non-Essential. Bagian bawah luar ditempel kertas warna MERAH sebagai pembeda, sedangkan bagian atas dalam tetap kardus polos.',
+            description: 'Alas kardus 32 × 32 cm untuk wadah Non-Essential. Bagian bawah luar ditempel kertas warna HIJAU sebagai pembeda, sedangkan bagian atas dalam tetap kardus polos.',
             capacity: '1 Pcs (32 × 32 cm)',
             outerFaces: [3], // 3 = Bottom (-Y)
             wrapMode: 'non_essential',
@@ -861,17 +861,17 @@
 
         // 2. Dinding Luar Kiri & Kanan (32 x 8 cm) -> Rebahkan rata ke samping kiri & kanan
         boxGroup.add(createCardboardPiece(
-          'Dinding Samping Kiri (Luar Berlapis Kertas Merah)',
+          'Dinding Samping Kiri (Luar Berlapis Kertas Hijau)',
           [T, H, W],
           [-L / 2 + T / 2, 0, 0],
           {
             shortTitle: 'DINDING KIRI',
             cutoutDim: '32 × 8 cm',
-            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            badge: 'DINDING LUAR (HIJAU - NON-ESSENTIAL)',
             dimensions: '32 × 8 cm',
-            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
             role: 'Dinding Luar Sisi Kiri',
-            description: 'Potongan dinding samping kiri (32 × 8 cm). Saat dibongkar, direbahkan rata di sebelah kiri alas. Sisi bawahnya berlapis kertas MERAH.',
+            description: 'Potongan dinding samping kiri (32 × 8 cm). Saat dibongkar, direbahkan rata di sebelah kiri alas. Sisi bawahnya berlapis kertas HIJAU.',
             capacity: '1 Pcs (32 × 8 cm)',
             outerFaces: [1], // 1 = Left (-X)
             wrapMode: 'non_essential',
@@ -880,17 +880,17 @@
           }
         ));
         boxGroup.add(createCardboardPiece(
-          'Dinding Samping Kanan (Luar Berlapis Kertas Merah)',
+          'Dinding Samping Kanan (Luar Berlapis Kertas Hijau)',
           [T, H, W],
           [L / 2 - T / 2, 0, 0],
           {
             shortTitle: 'DINDING KANAN',
             cutoutDim: '32 × 8 cm',
-            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            badge: 'DINDING LUAR (HIJAU - NON-ESSENTIAL)',
             dimensions: '32 × 8 cm',
-            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
             role: 'Dinding Luar Sisi Kanan',
-            description: 'Potongan dinding samping kanan (32 × 8 cm). Saat dibongkar, direbahkan rata di sebelah kanan alas. Sisi bawahnya berlapis kertas MERAH.',
+            description: 'Potongan dinding samping kanan (32 × 8 cm). Saat dibongkar, direbahkan rata di sebelah kanan alas. Sisi bawahnya berlapis kertas HIJAU.',
             capacity: '1 Pcs (32 × 8 cm)',
             outerFaces: [0], // 0 = Right (+X)
             wrapMode: 'non_essential',
@@ -901,15 +901,15 @@
 
         // 3. Dinding Luar Depan & Belakang (32 x 8 cm) -> Rebahkan rata ke depan & belakang
         boxGroup.add(createCardboardPiece(
-          'Dinding Luar Depan (Luar Berlapis Kertas Merah)',
+          'Dinding Luar Depan (Luar Berlapis Kertas Hijau)',
           [L - 2 * T, H, T],
           [0, 0, W / 2 - T / 2],
           {
             shortTitle: 'DINDING DEPAN',
             cutoutDim: '32 × 8 cm',
-            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            badge: 'DINDING LUAR (HIJAU - NON-ESSENTIAL)',
             dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
-            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
             role: 'Dinding Luar Depan',
             description: 'Potongan dinding depan (32 × 8 cm). Saat dibongkar, direbahkan rata menghadap atas di bagian depan alas.',
             capacity: '1 Pcs (32 × 8 cm)',
@@ -920,15 +920,15 @@
           }
         ));
         boxGroup.add(createCardboardPiece(
-          'Dinding Luar Belakang (Luar Berlapis Kertas Merah)',
+          'Dinding Luar Belakang (Luar Berlapis Kertas Hijau)',
           [L - 2 * T, H, T],
           [0, 0, -W / 2 + T / 2],
           {
             shortTitle: 'DINDING BELAKANG',
             cutoutDim: '32 × 8 cm',
-            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            badge: 'DINDING LUAR (HIJAU - NON-ESSENTIAL)',
             dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
-            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
             role: 'Dinding Luar Belakang',
             description: 'Potongan dinding belakang (32 × 8 cm). Saat dibongkar, direbahkan rata menghadap atas di bagian belakang alas.',
             capacity: '1 Pcs (32 × 8 cm)',
@@ -1057,31 +1057,31 @@
 
       if (mode === 'essential') {
         badgeTotal.innerText = '32 × 24 × 8 cm';
-        subtitle.innerText = 'Kardus Essential • Lapis Luar Hijau';
+        subtitle.innerText = 'Kardus Essential • Lapis Luar Merah';
         slotsBadge.innerText = '1 Kotak = 1 Soal (Tipe 1–6)';
-        desc.innerHTML = 'Bagian luar dinding & bawah alas ditempel <strong>kertas Hijau</strong> (bagian dalam tetap kardus polos). Satu wadah untuk <strong>1 jenis soal (Tipe 1–6)</strong>:';
+        desc.innerHTML = 'Bagian luar dinding & bawah alas ditempel <strong>kertas Merah</strong> (bagian dalam tetap kardus polos). Satu wadah untuk <strong>1 jenis soal (Tipe 1–6)</strong>:';
         pillsContainer.innerHTML = `
-          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-sm">🟩 Lapis Luar: Hijau</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-600 text-white shadow-sm">🟥 Lapis Luar: Merah</span>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800 border border-sky-200">💧 Hidrasi (1–6)</span>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">🥗 Nutrisi (1–6)</span>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">🛡️ Proteksi (1–6)</span>
         `;
         if (mobileSummaryText) {
-          mobileSummaryText.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-600 mr-1 align-middle"></span><strong>Luar Hijau:</strong> Hidrasi, Nutrisi, Proteksi (1–6)';
+          mobileSummaryText.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-sm bg-red-600 mr-1 align-middle"></span><strong>Luar Merah:</strong> Hidrasi, Nutrisi, Proteksi (1–6)';
         }
       } else {
         badgeTotal.innerText = '32 × 32 × 8 cm';
-        subtitle.innerText = 'Kardus Non-Essential • Lapis Luar Merah';
+        subtitle.innerText = 'Kardus Non-Essential • Lapis Luar Hijau';
         slotsBadge.innerText = '1 Kotak = 1 Soal (Tipe 1–7)';
-        desc.innerHTML = 'Bagian luar dinding & bawah alas ditempel <strong>kertas Merah</strong> (bagian dalam tetap kardus polos). Satu wadah untuk <strong>1 jenis soal (Tipe 1–7)</strong>:';
+        desc.innerHTML = 'Bagian luar dinding & bawah alas ditempel <strong>kertas Hijau</strong> (bagian dalam tetap kardus polos). Satu wadah untuk <strong>1 jenis soal (Tipe 1–7)</strong>:';
         pillsContainer.innerHTML = `
-          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-600 text-white shadow-sm">🟥 Lapis Luar: Merah</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-sm">🟩 Lapis Luar: Hijau</span>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">🕯️ Lilin (1–7)</span>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-pink-100 text-pink-800 border border-pink-200">👜 Tas (1–7)</span>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800 border border-teal-200">📁 Map (1–7)</span>
         `;
         if (mobileSummaryText) {
-          mobileSummaryText.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-sm bg-red-600 mr-1 align-middle"></span><strong>Luar Merah:</strong> Lilin, Tas, Map (1–7)';
+          mobileSummaryText.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-600 mr-1 align-middle"></span><strong>Luar Hijau:</strong> Lilin, Tas, Map (1–7)';
         }
       }
     }
@@ -1452,80 +1452,6 @@
 
     window.onload = initScene;
 
-        // --- TEMPEL TEPAT DI BAWAH window.onload = initScene ---
-        window.addEventListener('load', function() {
-            // 1. Tukar isi tekstur & properti warna material 3D langsung dari objeknya
-            if (typeof greenWrapMat !== 'undefined' && typeof redWrapMat !== 'undefined') {
-                const tempMap = greenWrapMat.map;
-                const tempColor = greenWrapMat.color.clone();
-                
-                greenWrapMat.map = redWrapMat.map;
-                greenWrapMat.color.copy(redWrapMat.color);
-                
-                redWrapMat.map = tempMap;
-                redWrapMat.color.copy(tempColor);
-                
-                greenWrapMat.needsUpdate = true;
-                redWrapMat.needsUpdate = true;
-            }
-
-            // 2. Tukar warna titik (dot indicator) pada kedua tombol mode di atas
-            const dotEss = document.querySelector('#btn-essential span.rounded-full');
-            const dotNon = document.querySelector('#btn-non-essential span.rounded-full');
-            if (dotEss) dotEss.style.backgroundColor = '#f5365c'; // Essential jadi Merah
-            if (dotNon) dotNon.style.backgroundColor = '#2dce89'; // Non-Essential jadi Hijau
-
-            // 3. Override fungsi setMode agar teks UI, kotak info, dan data klik 3D ikut terbalik
-            if (typeof window.setMode === 'function') {
-                const originalSetMode = window.setMode;
-                window.setMode = function(mode) {
-                    originalSetMode(mode); // Jalankan fungsi asli terlebih dahulu
-
-                    const box = document.getElementById('outer-color-box');
-                    const swatch = document.getElementById('outer-color-swatch');
-                    const title = document.getElementById('outer-color-title');
-                    const desc = document.getElementById('outer-color-desc');
-
-                    if (mode === 'essential') {
-                        if (box) box.className = 'mt-2.5 p-2.5 rounded-xl bg-rose-50/70 border border-rose-200/80 flex items-center gap-2.5';
-                        if (swatch) swatch.style.backgroundColor = '#f5365c';
-                        if (title) title.textContent = 'Lapisan Luar: Kertas Merah';
-                        if (desc) desc.textContent = 'Sisi luar dinding & bawah alas dilapisi kertas merah. Bagian dalam & sekat tetap coklat kardus.';
-                    } else {
-                        if (box) box.className = 'mt-2.5 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center gap-2.5';
-                        if (swatch) swatch.style.backgroundColor = '#2dce89';
-                        if (title) title.textContent = 'Lapisan Luar: Kertas Hijau';
-                        if (desc) desc.textContent = 'Sisi luar dinding & bawah alas dilapisi kertas hijau. Bagian dalam & sekat tetap coklat kardus.';
-                    }
-
-                    // Perbarui teks warna pada pop-up inspeksi saat bagian luar/alas kardus diklik
-                    if (typeof interactiveMeshes !== 'undefined') {
-                        interactiveMeshes.forEach(mesh => {
-                            if (mesh.userData) {
-                                const isEssMode = (mode === 'essential');
-                                const newColorName = isEssMode ? 'Merah (Essential)' : 'Hijau (Non-Essential)';
-                                const newHex = isEssMode ? '#f5365c' : '#2dce89';
-
-                                if (mesh.userData.wrapColor) mesh.userData.wrapColor = newColorName;
-                                if (mesh.userData.wrapHex) mesh.userData.wrapHex = newHex;
-                                
-                                if (mesh.userData.desc && (mesh.userData.desc.includes('Hijau') || mesh.userData.desc.includes('Merah'))) {
-                                    mesh.userData.desc = mesh.userData.desc
-                                        .replace(/Hijau \(Essential\)/g, 'Merah (Essential)')
-                                        .replace(/Merah \(Non-Essential\)/g, 'Hijau (Non-Essential)')
-                                        .replace(/kertas hijau/gi, '__TEMP_HIJAU__')
-                                        .replace(/kertas merah/gi, 'kertas hijau')
-                                        .replace(/__TEMP_HIJAU__/g, 'kertas merah');
-                                }
-                            }
-                        });
-                    }
-                };
-
-                // 4. Refresh tampilan awal agar langsung berwarna Merah (Essential)
-                window.setMode(typeof currentMode !== 'undefined' ? currentMode : 'essential');
-            }
-        });
     </script>
 </body>
 </html>
