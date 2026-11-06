@@ -1451,6 +1451,85 @@
     }
 
     window.onload = initScene;
+
+        // --- TEMPEL TEPAT DI BAWAH window.onload = initScene ---
+        window.addEventListener('load', function() {
+            // 1. Tukar isi tekstur & properti warna material 3D langsung dari objeknya
+            if (typeof greenWrapMat !== 'undefined' && typeof redWrapMat !== 'undefined') {
+                const tempMap = greenWrapMat.map;
+                const tempColor = greenWrapMat.color.clone();
+                
+                greenWrapMat.map = redWrapMat.map;
+                greenWrapMat.color.copy(redWrapMat.color);
+                
+                redWrapMat.map = tempMap;
+                redWrapMat.color.copy(tempColor);
+                
+                greenWrapMat.needsUpdate = true;
+                redWrapMat.needsUpdate = true;
+            }
+
+            // 2. Tukar warna titik (dot indicator) pada kedua tombol mode di atas
+            const dotEss = document.querySelector('#btn-essential span.rounded-full');
+            const dotNon = document.querySelector('#btn-non-essential span.rounded-full');
+            if (dotEss) dotEss.style.backgroundColor = '#f5365c'; // Essential jadi Merah
+            if (dotNon) dotNon.style.backgroundColor = '#2dce89'; // Non-Essential jadi Hijau
+
+            // 3. Override fungsi setMode agar teks UI, kotak info, dan data klik 3D ikut terbalik
+            if (typeof window.setMode === 'function') {
+                const originalSetMode = window.setMode;
+                window.setMode = function(mode) {
+                    originalSetMode(mode); // Jalankan fungsi asli terlebih dahulu
+
+                    const box = document.getElementById('outer-color-box');
+                    const swatch = document.getElementById('outer-color-swatch');
+                    const title = document.getElementById('outer-color-title');
+                    const desc = document.getElementById('outer-color-desc');
+
+                    if (mode === 'essential') {
+                        if (box) box.className = 'mt-2.5 p-2.5 rounded-xl bg-rose-50/70 border border-rose-200/80 flex items-center gap-2.5';
+                        if (swatch) swatch.style.backgroundColor = '#f5365c';
+                        if (title) title.textContent = 'Lapisan Luar: Kertas Merah';
+                        if (desc) desc.textContent = 'Sisi luar dinding & bawah alas dilapisi kertas merah. Bagian dalam & sekat tetap coklat kardus.';
+                    } else {
+                        if (box) box.className = 'mt-2.5 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center gap-2.5';
+                        if (swatch) swatch.style.backgroundColor = '#2dce89';
+                        if (title) title.textContent = 'Lapisan Luar: Kertas Hijau';
+                        if (desc) desc.textContent = 'Sisi luar dinding & bawah alas dilapisi kertas hijau. Bagian dalam & sekat tetap coklat kardus.';
+                    }
+
+                    // Perbarui teks warna pada pop-up inspeksi saat bagian luar/alas kardus diklik
+                    if (typeof interactiveMeshes !== 'undefined') {
+                        interactiveMeshes.forEach(mesh => {
+                            if (mesh.userData) {
+                                const isEssMode = (mode === 'essential');
+                                const newColorName = isEssMode ? 'Merah (Essential)' : 'Hijau (Non-Essential)';
+                                const newHex = isEssMode ? '#f5365c' : '#2dce89';
+
+                                if (mesh.userData.wrapColor) mesh.userData.wrapColor = newColorName;
+                                if (mesh.userData.wrapHex) mesh.userData.wrapHex = newHex;
+                                
+                                if (mesh.userData.desc && (mesh.userData.desc.includes('Hijau') || mesh.userData.desc.includes('Merah'))) {
+                                    mesh.userData.desc = mesh.userData.desc
+                                        .replace(/Hijau \(Essential\)/g, 'Merah (Essential)')
+                                        .replace(/Merah \(Non-Essential\)/g, 'Hijau (Non-Essential)')
+                                        .replace(/kertas hijau/gi, '__TEMP_HIJAU__')
+                                        .replace(/kertas merah/gi, 'kertas hijau')
+                                        .replace(/__TEMP_HIJAU__/g, 'kertas merah');
+                                }
+                            }
+                        });
+                    }
+                };
+
+                // 4. Refresh tampilan awal agar langsung berwarna Merah (Essential)
+                window.setMode(typeof currentMode !== 'undefined' ? currentMode : 'essential');
+            }
+        });
+    </script>
+</body>
+</html>
+
   </script>
 </body>
 </html>
