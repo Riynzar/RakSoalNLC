@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Argon 3D Box Visualizer — Organizer Soal</title>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js & OrbitControls CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            argon: {
+              bg: '#f8f9fe',
+              default: '#172b4d',
+              primary: '#5e72e4',
+              primaryHover: '#485fe0',
+              secondary: '#f4f5f7',
+              info: '#11cdef',
+              success: '#2dce89',
+              warning: '#fb6340',
+              danger: '#f5365c',
+              muted: '#8898aa'
+            }
+          },
+          boxShadow: {
+            'argon': '0 15px 35px rgba(50, 50, 93, 0.08), 0 5px 15px rgba(0, 0, 0, 0.04)',
+            'argon-sm': '0 4px 6px rgba(50, 50, 93, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05)',
+            'argon-btn': '0 4px 6px rgba(94, 114, 228, 0.3), 0 1px 3px rgba(0, 0, 0, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #f8f9fe;
+      color: #172b4d;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #canvas3d {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      touch-action: none;
+      outline: none;
+    }
+    .argon-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(23, 43, 77, 0.07);
+    }
+    .dim-label {
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .cutout-badge {
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      will-change: transform, opacity;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-argon-primary selection:text-white">
+
+  <!-- Main Viewport Container -->
+  <div id="canvas-container" class="relative w-screen h-screen overflow-hidden">
+    <canvas id="canvas3d"></canvas>
+
+    <!-- 3D Floating HTML Dimension Overlays (Assembled Mode) -->
+    <div id="labels-container" class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+      <div id="lbl-length" class="dim-label absolute px-2.5 py-1 rounded-full bg-white/95 text-argon-default border border-slate-200 shadow-argon-sm font-mono text-[11px] font-semibold flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-argon-primary"></span>
+        <span id="lbl-length-txt">Panjang: 32 cm</span>
+      </div>
+      <div id="lbl-width" class="dim-label absolute px-2.5 py-1 rounded-full bg-white/95 text-argon-default border border-slate-200 shadow-argon-sm font-mono text-[11px] font-semibold flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-argon-info"></span>
+        <span id="lbl-width-txt">Lebar: 24 cm</span>
+      </div>
+      <div id="lbl-height" class="dim-label absolute px-2.5 py-1 rounded-full bg-white/95 text-argon-default border border-slate-200 shadow-argon-sm font-mono text-[11px] font-semibold flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-argon-success"></span>
+        <span id="lbl-height-txt">Tinggi: 8 cm</span>
+      </div>
+    </div>
+
+    <!-- 3D Floating Cutout Pattern Badges (Flat-Pack "Bongkar" Mode) -->
+    <div id="cutout-labels-container" class="absolute inset-0 pointer-events-none overflow-hidden z-0"></div>
+
+    <!-- Top Left: Argon Control & Specification Card -->
+    <aside class="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-auto sm:w-[390px] z-10 pointer-events-auto">
+      <div class="argon-card rounded-2xl shadow-argon p-3 sm:p-4 space-y-2.5">
+        
+        <!-- Compact Header & Info Toggle for Mobile -->
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-argon-primary/10 text-argon-primary shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </span>
+            <div class="truncate">
+              <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-argon-default leading-tight truncate">
+                Cardboard Organizer 3D
+              </h1>
+              <p class="text-[11px] text-argon-muted hidden sm:block">
+                Sentuh komponen kardus/kertas untuk detail ukuran
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span id="badge-total-dim" class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-full bg-argon-primary/10 text-argon-primary border border-argon-primary/20 whitespace-nowrap">
+              32 × 24 × 8 cm
+            </span>
+            <!-- Mobile Info Collapse Button -->
+            <button id="btn-toggle-info" onclick="toggleMobileInfo()" class="sm:hidden p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-argon-default border border-slate-200 transition" title="Tampilkan/Sembunyikan Info Peruntukan">
+              <svg id="icon-info-chevron" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode Switcher (Essential vs Non-Essential) -->
+        <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/70">
+          <button id="btn-essential" onclick="switchMode('essential')" class="py-1.5 sm:py-2 px-2.5 rounded-lg text-xs font-bold transition-all duration-200 bg-argon-primary text-white shadow-argon-btn flex flex-col items-center">
+            <span>ESSENTIAL</span>
+            <span class="text-[10px] font-medium opacity-90">6 Sekat (32×24×8)</span>
+          </button>
+          <button id="btn-non-essential" onclick="switchMode('non_essential')" class="py-1.5 sm:py-2 px-2.5 rounded-lg text-xs font-bold transition-all duration-200 text-argon-default hover:bg-white/60 flex flex-col items-center">
+            <span>NON-ESSENTIAL</span>
+            <span class="text-[10px] font-medium text-argon-muted">7 Sekat (32×32×8)</span>
+          </button>
+        </div>
+
+        <!-- Context & Category Box Info (Collapsible on Mobile so it never blocks 3D view) -->
+        <div id="context-banner" class="hidden sm:block p-3 rounded-xl bg-gradient-to-br from-indigo-50/90 via-white to-sky-50/60 border border-indigo-100 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-argon-primary" id="context-subtitle">
+              Peruntukan Wadah Essential
+            </span>
+            <span id="context-slots-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white text-argon-default border border-slate-200 shadow-sm">
+              1 Wadah = 1 Jenis Soal (Tipe 1–6)
+            </span>
+          </div>
+          <p id="context-description" class="text-[11px] sm:text-xs text-argon-default leading-relaxed">
+            Setiap 1 wadah digunakan khusus untuk <strong>1 jenis soal</strong> yang memiliki <strong>6 tipe varian (Tipe 1 s/d 6)</strong>. Digunakan untuk soal:
+          </p>
+          <!-- Category Pills -->
+          <div id="category-pills" class="flex flex-wrap gap-1.5 pt-0.5">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Mobile Quick Summary Bar (Always visible on mobile when details are collapsed) -->
+        <div id="mobile-summary-bar" onclick="toggleMobileInfo()" class="sm:hidden flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50/80 border border-indigo-100 text-[11px] text-argon-default cursor-pointer">
+          <span id="mobile-summary-text" class="truncate font-medium">
+            Untuk soal: <strong class="text-argon-primary">Hidrasi, Nutrisi, Proteksi</strong> (Tipe 1–6)
+          </span>
+          <span class="text-[10px] font-bold text-argon-primary ml-2 shrink-0 underline">Detail</span>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- Bottom Center/Left: Compact Floating Action Bar (Mobile & Desktop) -->
+    <div class="fixed bottom-3 left-3 right-3 sm:left-4 sm:right-auto z-10 pointer-events-none flex justify-center sm:justify-start">
+      <div class="argon-card p-1.5 rounded-2xl shadow-argon pointer-events-auto flex items-center gap-1 sm:gap-1.5 max-w-full overflow-x-auto">
+        <button id="btn-explode" onclick="toggleExplode()" class="py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-95 text-argon-default border border-slate-200/80 text-[11px] font-semibold flex items-center gap-1.5 transition shrink-0">
+          <svg class="w-3.5 h-3.5 text-argon-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+          </svg>
+          <span id="txt-explode">Bongkar (Potongan)</span>
+        </button>
+
+        <button id="btn-papers" onclick="togglePapers()" class="py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-95 text-argon-default border border-slate-200/80 text-[11px] font-semibold flex items-center gap-1.5 transition shrink-0">
+          <svg class="w-3.5 h-3.5 text-argon-info shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span id="txt-papers">Kertas: ON</span>
+        </button>
+
+        <button id="btn-labels" onclick="toggleLabels()" class="py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-95 text-argon-default border border-slate-200/80 text-[11px] font-semibold flex items-center gap-1.5 transition shrink-0">
+          <svg class="w-3.5 h-3.5 text-argon-success shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <span id="txt-labels">Ukuran: ON</span>
+        </button>
+
+        <button onclick="resetCamera()" class="py-2 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-argon-primary border border-indigo-200/60 text-[11px] font-semibold flex items-center gap-1 transition shrink-0" title="Reset Sudut Kamera">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="hidden sm:inline">Reset</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Top Right: Camera Quick Presets (Desktop) -->
+    <div class="absolute top-4 right-4 z-10 hidden sm:flex items-center gap-2">
+      <div class="argon-card p-1.5 rounded-xl shadow-argon-sm flex items-center gap-1">
+        <button onclick="setCameraView('iso')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-argon-default hover:bg-slate-100 transition" title="Sudut Isometrik 3D">
+          3D Iso
+        </button>
+        <button onclick="setCameraView('top')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-argon-default hover:bg-slate-100 transition" title="Tampak Atas">
+          Atas
+        </button>
+        <button onclick="setCameraView('front')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-argon-default hover:bg-slate-100 transition" title="Tampak Depan">
+          Depan
+        </button>
+        <button onclick="setCameraView('bottom')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-argon-default hover:bg-slate-100 transition" title="Tampak Bawah Alas">
+          Bawah
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Right / Mobile Bottom Sheet: Argon Component Inspection Popup Card -->
+    <div id="inspector-card" class="fixed bottom-3 right-3 left-3 sm:bottom-4 sm:right-4 sm:left-auto sm:w-[370px] z-30 transition-all duration-300 transform translate-y-8 opacity-0 pointer-events-none">
+      <div class="argon-card rounded-2xl shadow-argon p-4 sm:p-5 border-t-4 border-t-argon-primary">
+        <div class="flex items-start justify-between gap-2 mb-2.5">
+          <div>
+            <span id="insp-badge" class="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-argon-primary/10 text-argon-primary mb-1">
+              KOMPONEN KARDUS
+            </span>
+            <h3 id="insp-title" class="font-extrabold text-sm sm:text-base text-argon-default leading-snug">
+              Alas Bawah Kardus
+            </h3>
+          </div>
+          <button onclick="closeInspector()" class="p-1.5 rounded-lg text-argon-muted hover:text-argon-default hover:bg-slate-100 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Specs Grid -->
+        <div class="grid grid-cols-2 gap-2 bg-slate-50/90 p-2.5 sm:p-3 rounded-xl border border-slate-200/70 mb-2.5">
+          <div>
+            <span class="block text-[10px] font-semibold uppercase text-argon-muted">Dimensi Ukuran</span>
+            <span id="insp-dims" class="font-mono font-bold text-xs sm:text-sm text-argon-primary">32 × 24 cm</span>
+          </div>
+          <div>
+            <span class="block text-[10px] font-semibold uppercase text-argon-muted">Tebal / Material</span>
+            <span id="insp-spec" class="font-mono font-semibold text-xs text-argon-default">0.3 cm (E-Flute)</span>
+          </div>
+          <div class="col-span-2 pt-1.5 border-t border-slate-200/60 flex items-center justify-between">
+            <span class="text-[11px] font-medium text-argon-muted">Bagian / Fungsi:</span>
+            <span id="insp-role" class="text-xs font-bold text-argon-default">Penopang Utama</span>
+          </div>
+        </div>
+
+        <p id="insp-desc" class="text-[11px] sm:text-xs text-slate-600 leading-relaxed mb-2.5">
+          Keterangan lengkap mengenai bagian yang dipilih.
+        </p>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+          <span class="text-argon-muted">Kapasitas: <strong id="insp-cap" class="text-argon-default">-</strong></span>
+          <button onclick="closeInspector()" class="font-bold text-argon-primary hover:underline">
+            Tutup Detail
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // APPLICATION STATE & CONFIGURATION
+    // ==========================================
+    let currentMode = 'essential'; // 'essential' | 'non_essential'
+    let isExploded = false;
+    let showPapers = true;
+    let showDimensionLabels = true;
+    let selectedMesh = null;
+    let mobileInfoOpen = false;
+
+    // Smooth camera animation state
+    let cameraAnim = {
+      active: false,
+      targetPos: new THREE.Vector3(),
+      targetLookAt: new THREE.Vector3()
+    };
+
+    // Variabel Global Three.js & Anchor Label
+    let scene, camera, renderer, controls, raycaster, mouse, studioGrid;
+    let boxGroup = null;
+    let dimLinesGroup = null;
+    let interactiveMeshes = [];
+    let cutoutLabelItems = [];
+    const labelAnchors = {
+      length: new THREE.Vector3(),
+      width: new THREE.Vector3(),
+      height: new THREE.Vector3()
+    };
+
+    // ==========================================
+    // PROCEDURAL TEXTURE GENERATORS
+    // ==========================================
+    function createKraftCardboardTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Warm realistic Kraft Cardboard base
+      ctx.fillStyle = '#c89d6c';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Subtle organic fiber noise
+      for (let i = 0; i < 4000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const w = Math.random() * 5 + 1;
+        const alpha = Math.random() * 0.12;
+        ctx.fillStyle = Math.random() > 0.45
+          ? `rgba(85, 55, 25, ${alpha})`
+          : `rgba(255, 235, 205, ${alpha * 1.1})`;
+        ctx.fillRect(x, y, w, 1);
+      }
+
+      // Subtle flute lines
+      for (let x = 0; x < 512; x += 8) {
+        ctx.fillStyle = 'rgba(70, 45, 20, 0.025)';
+        ctx.fillRect(x, 0, 3, 512);
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    // Create clean, uniform top-surface texture for question paper stacks (Tipe 1 - 6/7)
+    function createPaperTopTexture(slotTitle, subLabel, bgHex, accentHex, isMerged = false) {
+      const canvas = document.createElement('canvas');
+      canvas.width = isMerged ? 1024 : 512;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      // Clean white/ivory paper sheet background
+      ctx.fillStyle = bgHex;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Minimalist subtle border frame
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+      // Small corner accent pill for slot number
+      ctx.fillStyle = accentHex;
+      const pillW = isMerged ? 320 : 190;
+      ctx.fillRect(32, 32, pillW, 38);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(subLabel.toUpperCase(), 46, 57);
+
+      // Clean Slot Title (e.g., "TIPE SOAL 1")
+      ctx.fillStyle = '#172b4d';
+      ctx.font = isMerged ? '800 44px "Plus Jakarta Sans", sans-serif' : '800 42px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(slotTitle, 32, 138);
+
+      // Subtle ruled lines to represent printed exam sheets without clutter
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(32, 162, canvas.width - 64, 6);
+      ctx.fillRect(32, 180, (canvas.width - 64) * 0.7, 6);
+
+      // Dimension watermark on paper
+      ctx.fillStyle = '#64748b';
+      ctx.font = '600 21px "JetBrains Mono", monospace';
+      ctx.fillText(isMerged ? 'SEKAT GABUNGAN: 32 × 8 CM (KERTAS 16 × 8 CM)' : 'UKURAN KERTAS: 16 × 8 CM', 32, 222);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.anisotropy = 4;
+      return tex;
+    }
+
+    const kraftTexture = createKraftCardboardTexture();
+
+    // Create subtle colored paper wrap texture (for outer walls & bottom base)
+    function createColoredPaperWrapTexture(baseHex, labelCode) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Base colored paper fill
+      ctx.fillStyle = baseHex;
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Subtle matte paper grain so it looks like real colored paper glued onto cardboard
+      for (let i = 0; i < 3200; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const alpha = Math.random() * 0.055;
+        ctx.fillStyle = Math.random() > 0.5
+          ? `rgba(255, 255, 255, ${alpha})`
+          : `rgba(0, 0, 0, ${alpha})`;
+        ctx.fillRect(x, y, 2, 2);
+      }
+
+      // Subtle glued paper seam border
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(10, 10, 492, 492);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    const greenWrapTexture = createColoredPaperWrapTexture('#16a34a', 'ESSENTIAL');
+    const redWrapTexture = createColoredPaperWrapTexture('#dc2626', 'NON-ESSENTIAL');
+
+    // Base Cardboard Material (Inner faces & dividers remain natural brown Kraft)
+    function getCardboardMaterial() {
+      return new THREE.MeshStandardMaterial({
+        map: kraftTexture,
+        roughness: 0.82,
+        metalness: 0.03,
+        color: 0xd4aa78
+      });
+    }
+
+    // Colored Paper Material for specific outer faces only
+    function getOuterWrapMaterial(mode) {
+      const isEss = mode === 'essential';
+      return new THREE.MeshStandardMaterial({
+        map: isEss ? greenWrapTexture : redWrapTexture,
+        roughness: 0.65,
+        metalness: 0.02,
+        color: 0xffffff
+      });
+    }
+
+    const cardboardEdgeMat = new THREE.LineBasicMaterial({
+      color: 0x5c3e1e,
+      transparent: true,
+      opacity: 0.38
+    });
+
+    // ==========================================
+    // MESH BUILDER HELPERS
+    // ==========================================
+    // BoxGeometry face indices in Three.js:
+    // 0: Right (+X), 1: Left (-X), 2: Top (+Y), 3: Bottom (-Y), 4: Front (+Z), 5: Back (-Z)
+    function createCardboardPiece(name, dims, pos, meta) {
+      const geom = new THREE.BoxGeometry(dims[0], dims[1], dims[2]);
+      let meshMaterial;
+
+      if (meta.outerFaces && meta.outerFaces.length > 0) {
+        meshMaterial = [];
+        for (let i = 0; i < 6; i++) {
+          if (meta.outerFaces.includes(i)) {
+            meshMaterial.push(getOuterWrapMaterial(meta.wrapMode || currentMode));
+          } else {
+            meshMaterial.push(getCardboardMaterial());
+          }
+        }
+      } else {
+        meshMaterial = getCardboardMaterial();
+      }
+
+      const mesh = new THREE.Mesh(geom, meshMaterial);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      // Crisp architectural outline
+      const edges = new THREE.EdgesGeometry(geom);
+      mesh.add(new THREE.LineSegments(edges, cardboardEdgeMat));
+
+      const baseQuat = new THREE.Quaternion();
+      const flatEuler = meta.flatRot
+        ? new THREE.Euler(meta.flatRot[0], meta.flatRot[1], meta.flatRot[2], 'XYZ')
+        : new THREE.Euler(0, 0, 0, 'XYZ');
+      const flatQuat = new THREE.Quaternion().setFromEuler(flatEuler);
+
+      const flatPosVec = meta.flatPos
+        ? new THREE.Vector3(meta.flatPos[0], meta.flatPos[1], meta.flatPos[2])
+        : new THREE.Vector3(pos[0], pos[1], pos[2]);
+
+      mesh.userData = {
+        name: name,
+        shortTitle: meta.shortTitle || name,
+        cutoutDim: meta.cutoutDim || meta.dimensions,
+        badge: meta.badge || 'KOMPONEN KARDUS',
+        dimensions: meta.dimensions,
+        spec: meta.spec || '0.35 cm (Single Wall E-Flute)',
+        role: meta.role,
+        description: meta.description,
+        capacity: meta.capacity || '1 Pcs Potongan Kardus',
+        basePos: new THREE.Vector3(pos[0], pos[1], pos[2]),
+        flatPos: flatPosVec,
+        targetPos: new THREE.Vector3(pos[0], pos[1], pos[2]),
+        baseQuat: baseQuat,
+        flatQuat: flatQuat,
+        targetQuat: baseQuat.clone(),
+        isPaper: false
+      };
+
+      interactiveMeshes.push(mesh);
+      return mesh;
+    }
+
+    function createPaperStackMesh(config) {
+      const { name, category, subLabel, dims, pos, bgHex, sideHex, accentHex, isMerged, description, capacity } = config;
+      const geom = new THREE.BoxGeometry(dims[0], dims[1], dims[2]);
+
+      const topTex = createPaperTopTexture(category, subLabel, bgHex, accentHex, isMerged);
+      const sideMat = new THREE.MeshStandardMaterial({ color: sideHex, roughness: 0.65 });
+      const topMat = new THREE.MeshStandardMaterial({ map: topTex, roughness: 0.45 });
+
+      // Multi-material so top face displays the printed question category label
+      const materials = [sideMat, sideMat, topMat, sideMat, sideMat, sideMat];
+      const mesh = new THREE.Mesh(geom, materials);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      const edges = new THREE.EdgesGeometry(geom);
+      const lineMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 0.45 });
+      mesh.add(new THREE.LineSegments(edges, lineMat));
+
+      const baseQuat = new THREE.Quaternion();
+      mesh.userData = {
+        name: name,
+        badge: isMerged ? 'KOMPARTEMEN GABUNGAN (2-IN-1)' : 'TUMPUKAN KERTAS SOAL',
+        dimensions: isMerged ? `32 × 8 cm (Tumpukan ${dims[1]} cm)` : `16 × 8 cm (Tumpukan ${dims[1]} cm)`,
+        spec: 'Kertas HVS 80 gsm',
+        role: `Kategori Soal: ${category}`,
+        description: description,
+        capacity: capacity || '± 450 - 500 Lembar Soal',
+        basePos: new THREE.Vector3(pos[0], pos[1], pos[2]),
+        flatPos: new THREE.Vector3(pos[0], pos[1] + 8, pos[2]),
+        targetPos: new THREE.Vector3(pos[0], pos[1], pos[2]),
+        baseQuat: baseQuat,
+        flatQuat: baseQuat.clone(),
+        targetQuat: baseQuat.clone(),
+        isPaper: true
+      };
+
+      interactiveMeshes.push(mesh);
+      return mesh;
+    }
+
+    // Rebuild 2D floating badges for each cardboard cutout piece in "Bongkar" mode
+    function buildCutoutLabels() {
+      const container = document.getElementById('cutout-labels-container');
+      container.innerHTML = '';
+      cutoutLabelItems = [];
+
+      interactiveMeshes.forEach((mesh) => {
+        if (mesh.userData.isPaper) return;
+        const badge = document.createElement('div');
+        badge.className = 'cutout-badge absolute px-2 py-0.5 rounded-md bg-white/95 text-argon-default border border-slate-300/90 shadow-sm text-[10px] leading-tight font-semibold flex flex-col items-center text-center opacity-0';
+        badge.innerHTML = `
+          <span class="font-extrabold text-[9px] uppercase tracking-tight text-argon-primary">${mesh.userData.shortTitle}</span>
+          <span class="font-mono text-[10px] font-bold text-slate-800">${mesh.userData.cutoutDim}</span>
+        `;
+        container.appendChild(badge);
+        cutoutLabelItems.push({ mesh, el: badge });
+      });
+    }
+
+    // Build subtle 3D Dimension Ruler Lines around the box
+    function buildDimensionRulers(L, W, H) {
+      if (dimLinesGroup) scene.remove(dimLinesGroup);
+      dimLinesGroup = new THREE.Group();
+
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x5e72e4, transparent: true, opacity: 0.6 });
+      const yFloor = -H / 2 + 0.05;
+
+      // Length line (Front X)
+      const zFront = W / 2 + 2.2;
+      const ptsLength = [
+        new THREE.Vector3(-L / 2, yFloor, zFront),
+        new THREE.Vector3(L / 2, yFloor, zFront)
+      ];
+      dimLinesGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsLength), lineMat));
+
+      // Width line (Right Z)
+      const xRight = L / 2 + 2.2;
+      const ptsWidth = [
+        new THREE.Vector3(xRight, yFloor, -W / 2),
+        new THREE.Vector3(xRight, yFloor, W / 2)
+      ];
+      dimLinesGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsWidth), lineMat));
+
+      // Height line (Front-Left Vertical Y)
+      const xLeft = -L / 2 - 2.0;
+      const zCorner = W / 2;
+      const ptsHeight = [
+        new THREE.Vector3(xLeft, -H / 2, zCorner),
+        new THREE.Vector3(xLeft, H / 2, zCorner)
+      ];
+      dimLinesGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsHeight), lineMat));
+
+      // Update label anchor positions
+      labelAnchors.length.set(0, yFloor, zFront + 0.8);
+      labelAnchors.width.set(xRight + 1.2, yFloor, 0);
+      labelAnchors.height.set(xLeft - 0.5, 0, zCorner);
+
+      document.getElementById('lbl-length-txt').innerText = `Panjang: ${L} cm`;
+      document.getElementById('lbl-width-txt').innerText = `Lebar: ${W} cm`;
+      document.getElementById('lbl-height-txt').innerText = `Tinggi: ${H} cm`;
+
+      dimLinesGroup.visible = showDimensionLabels;
+      scene.add(dimLinesGroup);
+    }
+
+    // ==========================================
+    // BUILD 3D ORGANIZER MODELS
+    // ==========================================
+    function buildOrganizerModel(mode) {
+      if (boxGroup) scene.remove(boxGroup);
+      interactiveMeshes = [];
+      boxGroup = new THREE.Group();
+
+      const T = 0.35; // Ketebalan kardus ~0.35 cm
+      const H = 8.0;  // Tinggi kardus 8 cm
+      const flatY = -H / 2 + T / 2; // Posisi rata lantai saat dibongkar (semua keping sejajar dari atas)
+
+      if (mode === 'essential') {
+        // ====================================================
+        // ESSENTIAL: 32 x 24 x 8 cm (6 Bagian: Hidrasi, Nutrisi, Proteksi)
+        // Bagian Luar Ditempel Kertas Warna HIJAU
+        // ====================================================
+        const L = 32.0;
+        const W = 24.0;
+
+        // 1. Alas Kardus (32 x 24 cm) -> Sisi bawah (-Y, index 3) dilapisi kertas Hijau
+        boxGroup.add(createCardboardPiece(
+          'Alas Bawah Kardus (Luar Berlapis Kertas Hijau)',
+          [L, T, W],
+          [0, -H / 2 + T / 2, 0],
+          {
+            shortTitle: 'ALAS UTAMA',
+            cutoutDim: '32 × 24 cm',
+            badge: 'ALAS LUAR (HIJAU - ESSENTIAL)',
+            dimensions: '32 × 24 cm',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Bawah)',
+            role: 'Alas Utama (6 Kompartemen)',
+            description: 'Lembaran dasar kardus ukuran 32 × 24 cm. Bagian bawah luar ditempel kertas warna HIJAU sebagai penanda kategori Essential, sedangkan sisi atas dalam tetap kardus coklat.',
+            capacity: '1 Pcs (32 × 24 cm)',
+            outerFaces: [3], // 3 = Bottom (-Y)
+            wrapMode: 'essential',
+            flatPos: [0, flatY, 0],
+            flatRot: [0, 0, 0]
+          }
+        ));
+
+        // 2. Dinding Samping Kiri & Kanan (24 x 8 cm) -> Rebahkan 90 derajat ke kiri & kanan hingga tidur rata
+        boxGroup.add(createCardboardPiece(
+          'Dinding Samping Kiri (Luar Berlapis Kertas Hijau)',
+          [T, H, W],
+          [-L / 2 + T / 2, 0, 0],
+          {
+            shortTitle: 'DINDING KIRI',
+            cutoutDim: '24 × 8 cm',
+            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            dimensions: '24 × 8 cm',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            role: 'Dinding Luar Sisi Kiri',
+            description: 'Potongan dinding samping kiri (24 × 8 cm). Saat dibongkar, terlihat sebagai kepingan persegi panjang datar. Sisi bawahnya berlapis kertas HIJAU dan sisi atasnya kardus coklat.',
+            capacity: '1 Pcs (24 × 8 cm)',
+            outerFaces: [1], // 1 = Left (-X)
+            wrapMode: 'essential',
+            flatPos: [-L / 2 - H / 2 - 3.5, flatY, 0],
+            flatRot: [0, 0, Math.PI / 2] // Rebah ke kiri, sisi luar (-X) menghadap ke bawah (-Y)
+          }
+        ));
+        boxGroup.add(createCardboardPiece(
+          'Dinding Samping Kanan (Luar Berlapis Kertas Hijau)',
+          [T, H, W],
+          [L / 2 - T / 2, 0, 0],
+          {
+            shortTitle: 'DINDING KANAN',
+            cutoutDim: '24 × 8 cm',
+            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            dimensions: '24 × 8 cm',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            role: 'Dinding Luar Sisi Kanan',
+            description: 'Potongan dinding samping kanan (24 × 8 cm). Saat dibongkar, terlihat sebagai kepingan persegi panjang datar. Sisi bawahnya berlapis kertas HIJAU dan sisi atasnya kardus coklat.',
+            capacity: '1 Pcs (24 × 8 cm)',
+            outerFaces: [0], // 0 = Right (+X)
+            wrapMode: 'essential',
+            flatPos: [L / 2 + H / 2 + 3.5, flatY, 0],
+            flatRot: [0, 0, -Math.PI / 2] // Rebah ke kanan, sisi luar (+X) menghadap ke bawah (-Y)
+          }
+        ));
+
+        // 3. Dinding Depan & Belakang (32 x 8 cm) -> Rebahkan 90 derajat ke depan & belakang hingga tidur rata
+        boxGroup.add(createCardboardPiece(
+          'Dinding Luar Depan (Luar Berlapis Kertas Hijau)',
+          [L - 2 * T, H, T],
+          [0, 0, W / 2 - T / 2],
+          {
+            shortTitle: 'DINDING DEPAN',
+            cutoutDim: '32 × 8 cm',
+            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            role: 'Dinding Luar Bagian Depan',
+            description: 'Potongan dinding depan sepanjang 32 × 8 cm. Saat dibongkar, direbahkan rata menghadap ke atas di sisi bawah/depan alas.',
+            capacity: '1 Pcs (32 × 8 cm)',
+            outerFaces: [4], // 4 = Front (+Z)
+            wrapMode: 'essential',
+            flatPos: [0, flatY, W / 2 + H / 2 + 3.5],
+            flatRot: [Math.PI / 2, 0, 0] // Rebah ke depan, sisi luar (+Z) menghadap ke bawah (-Y)
+          }
+        ));
+        boxGroup.add(createCardboardPiece(
+          'Dinding Luar Belakang (Luar Berlapis Kertas Hijau)',
+          [L - 2 * T, H, T],
+          [0, 0, -W / 2 + T / 2],
+          {
+            shortTitle: 'DINDING BELAKANG',
+            cutoutDim: '32 × 8 cm',
+            badge: 'DINDING LUAR (HIJAU - ESSENTIAL)',
+            dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
+            spec: 'Kardus 0.35 cm + Kertas Hijau (Sisi Luar)',
+            role: 'Dinding Luar Bagian Belakang',
+            description: 'Potongan dinding belakang sepanjang 32 × 8 cm. Saat dibongkar, direbahkan rata menghadap ke atas di sisi atas/belakang alas.',
+            capacity: '1 Pcs (32 × 8 cm)',
+            outerFaces: [5], // 5 = Back (-Z)
+            wrapMode: 'essential',
+            flatPos: [0, flatY, -W / 2 - H / 2 - 3.5],
+            flatRot: [-Math.PI / 2, 0, 0] // Rebah ke belakang, sisi luar (-Z) menghadap ke bawah (-Y)
+          }
+        ));
+
+        // 4. Sekat Vertikal Tengah (24 x 8 cm) - Direbahkan rata di baris potongan bawah
+        boxGroup.add(createCardboardPiece(
+          'Sekat Vertikal Tengah (Kardus Polos Dalam)',
+          [T, H * 0.96, W - 2 * T],
+          [0, 0, 0],
+          {
+            shortTitle: 'SEKAT TENGAH',
+            cutoutDim: '24 × 8 cm',
+            dimensions: '24 × 8 cm (Bersih: 23.3 × 7.7 cm)',
+            role: 'Sekat Tengah Pemisah Kolom Kiri & Kanan',
+            description: 'Potongan kardus polos ukuran 24 × 8 cm untuk sekat tengah. Saat dibongkar, diletakkan tidur menghadap atas bersama kepingan sekat lainnya.',
+            capacity: '1 Pcs (24 × 8 cm)',
+            flatPos: [0, flatY, W / 2 + H + 11.5],
+            flatRot: [0, Math.PI / 2, Math.PI / 2] // Diputar & direbahkan rata horizontal (24 cm membentang X, 8 cm Z)
+          }
+        ));
+
+        // 5. Sekat Horizontal (4 keping @ 16 x 8 cm) - Direbahkan rata dan disusun rapi berjajar
+        const rowZDividers = [-4.0, 4.0];
+        const halfColW = (L - 3 * T) / 2;
+
+        rowZDividers.forEach((zPos, i) => {
+          const flatZRow = W / 2 + H + 22.0 + i * (H + 3.0);
+          boxGroup.add(createCardboardPiece(
+            `Sekat Horizontal Kiri #${i + 1}`,
+            [halfColW, H * 0.96, T],
+            [-halfColW / 2 - T / 2, 0, zPos],
+            {
+              shortTitle: `SEKAT KIRI #${i + 1}`,
+              cutoutDim: '16 × 8 cm',
+              dimensions: '16 × 8 cm (Bersih: 15.5 × 7.7 cm)',
+              role: `Sekat Pembatas Baris Kiri #${i + 1}`,
+              description: `Potongan sekat kardus ukuran 16 × 8 cm (Kiri #${i + 1}). Saat dibongkar, terlihat rata dari atas siap dipotong dan dipasang.`,
+              capacity: '1 Pcs dari 4 Sekat (16 × 8 cm)',
+              flatPos: [-9.5, flatY, flatZRow],
+              flatRot: [Math.PI / 2, 0, 0]
+            }
+          ));
+          boxGroup.add(createCardboardPiece(
+            `Sekat Horizontal Kanan #${i + 1}`,
+            [halfColW, H * 0.96, T],
+            [halfColW / 2 + T / 2, 0, zPos],
+            {
+              shortTitle: `SEKAT KANAN #${i + 1}`,
+              cutoutDim: '16 × 8 cm',
+              dimensions: '16 × 8 cm (Bersih: 15.5 × 7.7 cm)',
+              role: `Sekat Pembatas Baris Kanan #${i + 1}`,
+              description: `Potongan sekat kardus ukuran 16 × 8 cm (Kanan #${i + 1}). Saat dibongkar, terlihat rata dari atas siap dipotong dan dipasang.`,
+              capacity: '1 Pcs dari 4 Sekat (16 × 8 cm)',
+              flatPos: [9.5, flatY, flatZRow],
+              flatRot: [Math.PI / 2, 0, 0]
+            }
+          ));
+        });
+
+        // 6. Tumpukan Kertas Soal Seragam (Tipe 1 s/d Tipe 6 dalam 1 Wadah Kategori)
+        const essentialSlotCoords = [
+          { idx: 1, pos: [-8.0, -H / 2 + T + 2.3, -8.0], loc: 'Belakang Kiri' },
+          { idx: 2, pos: [8.0, -H / 2 + T + 2.3, -8.0], loc: 'Belakang Kanan' },
+          { idx: 3, pos: [-8.0, -H / 2 + T + 2.3, 0.0], loc: 'Tengah Kiri' },
+          { idx: 4, pos: [8.0, -H / 2 + T + 2.3, 0.0], loc: 'Tengah Kanan' },
+          { idx: 5, pos: [-8.0, -H / 2 + T + 2.3, 8.0], loc: 'Depan Kiri' },
+          { idx: 6, pos: [8.0, -H / 2 + T + 2.3, 8.0], loc: 'Depan Kanan' }
+        ];
+
+        essentialSlotCoords.forEach(s => {
+          boxGroup.add(createPaperStackMesh({
+            name: `Tumpukan Kertas — Tipe Soal ${s.idx}`,
+            category: `TIPE SOAL ${s.idx}`,
+            subLabel: `Sekat ${s.idx} • 16×8 cm`,
+            dims: [15.1, 4.6, 7.2],
+            pos: s.pos,
+            bgHex: '#ffffff',
+            sideHex: '#f1f5f9',
+            accentHex: '#5e72e4',
+            isMerged: false,
+            description: `Tumpukan kertas ukuran 16 × 8 cm pada Sekat ${s.idx} (${s.loc}). Dalam penggunaannya, 1 kotak Essential ini khusus menyimpan 1 jenis soal saja (misal: khusus Hidrasi Tipe 1–6, atau khusus Nutrisi Tipe 1–6, atau khusus Proteksi Tipe 1–6).`
+          }));
+        });
+
+        buildDimensionRulers(L, W, H);
+
+      } else {
+        // ====================================================
+        // NON-ESSENTIAL: 32 x 32 x 8 cm (7 Bagian untuk 1 Kategori: Lilin / Tas / Map)
+        // Bagian Luar Ditempel Kertas Warna MERAH
+        // ====================================================
+        const L = 32.0;
+        const W = 32.0;
+
+        // 1. Alas Bawah Kardus (32 x 32 cm) -> Sisi bawah (-Y, index 3) dilapisi kertas Merah
+        boxGroup.add(createCardboardPiece(
+          'Alas Bawah Kardus (Luar Berlapis Kertas Merah)',
+          [L, T, W],
+          [0, -H / 2 + T / 2, 0],
+          {
+            shortTitle: 'ALAS UTAMA',
+            cutoutDim: '32 × 32 cm',
+            badge: 'ALAS LUAR (MERAH - NON-ESSENTIAL)',
+            dimensions: '32 × 32 cm',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Bawah)',
+            role: 'Alas Utama Persegi (7 Kompartemen)',
+            description: 'Alas kardus 32 × 32 cm untuk wadah Non-Essential. Bagian bawah luar ditempel kertas warna MERAH sebagai pembeda, sedangkan bagian atas dalam tetap kardus polos.',
+            capacity: '1 Pcs (32 × 32 cm)',
+            outerFaces: [3], // 3 = Bottom (-Y)
+            wrapMode: 'non_essential',
+            flatPos: [0, flatY, 0],
+            flatRot: [0, 0, 0]
+          }
+        ));
+
+        // 2. Dinding Luar Kiri & Kanan (32 x 8 cm) -> Rebahkan rata ke samping kiri & kanan
+        boxGroup.add(createCardboardPiece(
+          'Dinding Samping Kiri (Luar Berlapis Kertas Merah)',
+          [T, H, W],
+          [-L / 2 + T / 2, 0, 0],
+          {
+            shortTitle: 'DINDING KIRI',
+            cutoutDim: '32 × 8 cm',
+            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            dimensions: '32 × 8 cm',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            role: 'Dinding Luar Sisi Kiri',
+            description: 'Potongan dinding samping kiri (32 × 8 cm). Saat dibongkar, direbahkan rata di sebelah kiri alas. Sisi bawahnya berlapis kertas MERAH.',
+            capacity: '1 Pcs (32 × 8 cm)',
+            outerFaces: [1], // 1 = Left (-X)
+            wrapMode: 'non_essential',
+            flatPos: [-L / 2 - H / 2 - 3.5, flatY, 0],
+            flatRot: [0, 0, Math.PI / 2]
+          }
+        ));
+        boxGroup.add(createCardboardPiece(
+          'Dinding Samping Kanan (Luar Berlapis Kertas Merah)',
+          [T, H, W],
+          [L / 2 - T / 2, 0, 0],
+          {
+            shortTitle: 'DINDING KANAN',
+            cutoutDim: '32 × 8 cm',
+            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            dimensions: '32 × 8 cm',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            role: 'Dinding Luar Sisi Kanan',
+            description: 'Potongan dinding samping kanan (32 × 8 cm). Saat dibongkar, direbahkan rata di sebelah kanan alas. Sisi bawahnya berlapis kertas MERAH.',
+            capacity: '1 Pcs (32 × 8 cm)',
+            outerFaces: [0], // 0 = Right (+X)
+            wrapMode: 'non_essential',
+            flatPos: [L / 2 + H / 2 + 3.5, flatY, 0],
+            flatRot: [0, 0, -Math.PI / 2]
+          }
+        ));
+
+        // 3. Dinding Luar Depan & Belakang (32 x 8 cm) -> Rebahkan rata ke depan & belakang
+        boxGroup.add(createCardboardPiece(
+          'Dinding Luar Depan (Luar Berlapis Kertas Merah)',
+          [L - 2 * T, H, T],
+          [0, 0, W / 2 - T / 2],
+          {
+            shortTitle: 'DINDING DEPAN',
+            cutoutDim: '32 × 8 cm',
+            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            role: 'Dinding Luar Depan',
+            description: 'Potongan dinding depan (32 × 8 cm). Saat dibongkar, direbahkan rata menghadap atas di bagian depan alas.',
+            capacity: '1 Pcs (32 × 8 cm)',
+            outerFaces: [4], // 4 = Front (+Z)
+            wrapMode: 'non_essential',
+            flatPos: [0, flatY, W / 2 + H / 2 + 3.5],
+            flatRot: [Math.PI / 2, 0, 0]
+          }
+        ));
+        boxGroup.add(createCardboardPiece(
+          'Dinding Luar Belakang (Luar Berlapis Kertas Merah)',
+          [L - 2 * T, H, T],
+          [0, 0, -W / 2 + T / 2],
+          {
+            shortTitle: 'DINDING BELAKANG',
+            cutoutDim: '32 × 8 cm',
+            badge: 'DINDING LUAR (MERAH - NON-ESSENTIAL)',
+            dimensions: '32 × 8 cm (Dalam: 31.3 × 8 cm)',
+            spec: 'Kardus 0.35 cm + Kertas Merah (Sisi Luar)',
+            role: 'Dinding Luar Belakang',
+            description: 'Potongan dinding belakang (32 × 8 cm). Saat dibongkar, direbahkan rata menghadap atas di bagian belakang alas.',
+            capacity: '1 Pcs (32 × 8 cm)',
+            outerFaces: [5], // 5 = Back (-Z)
+            wrapMode: 'non_essential',
+            flatPos: [0, flatY, -W / 2 - H / 2 - 3.5],
+            flatRot: [-Math.PI / 2, 0, 0]
+          }
+        ));
+
+        // 4. Sekat Horizontal (3 keping panjang @ 32 x 8 cm) -> Direbahkan rata berurutan di bawah
+        const zDivs = [-8.0, 0.0, 8.0];
+        zDivs.forEach((zVal, idx) => {
+          const isFrontMergeBorder = idx === 2;
+          const flatZRow = W / 2 + H + 11.5 + idx * (H + 2.8);
+          boxGroup.add(createCardboardPiece(
+            isFrontMergeBorder
+              ? 'Sekat Horizontal Utama (Batas Kompartemen Gabungan)'
+              : `Sekat Horizontal Baris #${idx + 1}`,
+            [L - 2 * T, H * 0.96, T],
+            [0, 0, zVal],
+            {
+              shortTitle: isFrontMergeBorder ? 'SEKAT BATAS GABUNGAN' : `SEKAT BARIS #${idx + 1}`,
+              cutoutDim: '32 × 8 cm',
+              dimensions: '32 × 8 cm (Dalam: 31.3 × 7.7 cm)',
+              role: isFrontMergeBorder ? 'Batas Ruang Gabungan 32 × 8 cm' : 'Sekat Pembatas Baris',
+              description: isFrontMergeBorder
+                ? 'Potongan sekat penuh 32 × 8 cm yang membatasi 6 slot standar dengan 1 slot gabungan di depan. Saat dibongkar, rebah rata menghadap ke atas.'
+                : 'Potongan sekat pembatas baris ukuran 32 × 8 cm. Saat dibongkar, rebah rata menghadap ke atas.',
+              capacity: '1 Pcs dari 3 Sekat Panjang (32 × 8 cm)',
+              flatPos: [0, flatY, flatZRow],
+              flatRot: [Math.PI / 2, 0, 0]
+            }
+          ));
+        });
+
+        // 5. Sekat Vertikal Tengah (HANYA 24 x 8 cm untuk 3 baris belakang) -> Direbahkan rata
+        boxGroup.add(createCardboardPiece(
+          'Sekat Vertikal Tengah (24 × 8 cm — Baris Depan Digabung)',
+          [T, H * 0.96, 24.0 - T],
+          [0, 0, -4.0],
+          {
+            shortTitle: 'SEKAT TENGAH (3 BARIS)',
+            cutoutDim: '24 × 8 cm',
+            dimensions: '24 × 8 cm (Dalam: 23.6 × 7.7 cm)',
+            role: 'Sekat Pemisah 6 Slot Standar (Tipe 1–6)',
+            description: 'Potongan sekat vertikal sepanjang 24 × 8 cm (bukan 32 cm) karena baris ke-4 di depan digabung menjadi satu ruang lebar. Saat dibongkar, rebah rata menghadap ke atas.',
+            capacity: '1 Pcs (24 × 8 cm)',
+            flatPos: [0, flatY, W / 2 + H + 11.5 + 3 * (H + 2.8)],
+            flatRot: [0, Math.PI / 2, Math.PI / 2]
+          }
+        ));
+
+        // 6. Tumpukan Kertas Soal Non-Essential (Tipe 1 s/d Tipe 7 dalam 1 Wadah Kategori)
+        const nonEssentialSixCoords = [
+          { idx: 1, pos: [-8.0, -H / 2 + T + 2.3, -12.0], loc: 'Baris 1 Kiri' },
+          { idx: 2, pos: [8.0, -H / 2 + T + 2.3, -12.0], loc: 'Baris 1 Kanan' },
+          { idx: 3, pos: [-8.0, -H / 2 + T + 2.3, -4.0], loc: 'Baris 2 Kiri' },
+          { idx: 4, pos: [8.0, -H / 2 + T + 2.3, -4.0], loc: 'Baris 2 Kanan' },
+          { idx: 5, pos: [-8.0, -H / 2 + T + 2.3, 4.0], loc: 'Baris 3 Kiri' },
+          { idx: 6, pos: [8.0, -H / 2 + T + 2.3, 4.0], loc: 'Baris 3 Kanan' }
+        ];
+
+        nonEssentialSixCoords.forEach(s => {
+          boxGroup.add(createPaperStackMesh({
+            name: `Tumpukan Kertas — Tipe Soal ${s.idx}`,
+            category: `TIPE SOAL ${s.idx}`,
+            subLabel: `Sekat ${s.idx} • 16×8 cm`,
+            dims: [15.1, 4.6, 7.2],
+            pos: s.pos,
+            bgHex: '#ffffff',
+            sideHex: '#f1f5f9',
+            accentHex: '#5e72e4',
+            isMerged: false,
+            description: `Tumpukan kertas ukuran 16 × 8 cm pada Sekat ${s.idx} (${s.loc}). Satu kotak Non-Essential ini digunakan khusus untuk 1 jenis soal saja (misal: khusus Lilin Tipe 1–7, atau khusus Tas Tipe 1–7, atau khusus Map Tipe 1–7).`
+          }));
+        });
+
+        // Kompartemen Ke-7 (Merged 2-in-1: 32 x 8 cm untuk Tipe Soal 7)
+        boxGroup.add(createPaperStackMesh({
+          name: 'Tumpukan Kertas — Tipe Soal 7 (Sekat Gabungan)',
+          category: 'TIPE SOAL 7',
+          subLabel: 'Sekat 7 (Gabungan 2 Bagian • 32×8 cm)',
+          dims: [15.6, 4.6, 7.2],
+          pos: [0, -H / 2 + T + 2.3, 12.0],
+          bgHex: '#ffffff',
+          sideHex: '#e2e8f0',
+          accentHex: '#0d9488',
+          isMerged: true,
+          capacity: 'Ruang 32 × 8 cm (Kertas 16 × 8 cm di Tengah)',
+          description: 'Bagian ke-7 hasil penggabungan 2 sekat kanan-kiri di ujung depan menjadi 1 ruang lebar (32 × 8 cm) untuk meletakkan kertas Tipe Soal ke-7 (baik untuk kategori Lilin, Tas, maupun Map).'
+        }));
+
+        buildDimensionRulers(L, W, H);
+      }
+
+      scene.add(boxGroup);
+      buildCutoutLabels();
+      updateExplosionAndVisibility();
+      updateContextUI(mode);
+    }
+
+    // ==========================================
+    // UI & CONTEXT PANEL UPDATES
+    // ==========================================
+    function toggleMobileInfo() {
+      mobileInfoOpen = !mobileInfoOpen;
+      const banner = document.getElementById('context-banner');
+      const summaryBar = document.getElementById('mobile-summary-bar');
+      if (mobileInfoOpen) {
+        banner.classList.remove('hidden');
+        summaryBar.classList.add('hidden');
+      } else {
+        banner.classList.add('hidden');
+        summaryBar.classList.remove('hidden');
+      }
+    }
+
+    function updateContextUI(mode) {
+      const badgeTotal = document.getElementById('badge-total-dim');
+      const subtitle = document.getElementById('context-subtitle');
+      const slotsBadge = document.getElementById('context-slots-badge');
+      const desc = document.getElementById('context-description');
+      const pillsContainer = document.getElementById('category-pills');
+      const mobileSummaryText = document.getElementById('mobile-summary-text');
+
+      if (mode === 'essential') {
+        badgeTotal.innerText = '32 × 24 × 8 cm';
+        subtitle.innerText = 'Kardus Essential • Lapis Luar Hijau';
+        slotsBadge.innerText = '1 Kotak = 1 Soal (Tipe 1–6)';
+        desc.innerHTML = 'Bagian luar dinding & bawah alas ditempel <strong>kertas Hijau</strong> (bagian dalam tetap kardus polos). Satu wadah untuk <strong>1 jenis soal (Tipe 1–6)</strong>:';
+        pillsContainer.innerHTML = `
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-sm">🟩 Lapis Luar: Hijau</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800 border border-sky-200">💧 Hidrasi (1–6)</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">🥗 Nutrisi (1–6)</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">🛡️ Proteksi (1–6)</span>
+        `;
+        if (mobileSummaryText) {
+          mobileSummaryText.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-600 mr-1 align-middle"></span><strong>Luar Hijau:</strong> Hidrasi, Nutrisi, Proteksi (1–6)';
+        }
+      } else {
+        badgeTotal.innerText = '32 × 32 × 8 cm';
+        subtitle.innerText = 'Kardus Non-Essential • Lapis Luar Merah';
+        slotsBadge.innerText = '1 Kotak = 1 Soal (Tipe 1–7)';
+        desc.innerHTML = 'Bagian luar dinding & bawah alas ditempel <strong>kertas Merah</strong> (bagian dalam tetap kardus polos). Satu wadah untuk <strong>1 jenis soal (Tipe 1–7)</strong>:';
+        pillsContainer.innerHTML = `
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-600 text-white shadow-sm">🟥 Lapis Luar: Merah</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">🕯️ Lilin (1–7)</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-pink-100 text-pink-800 border border-pink-200">👜 Tas (1–7)</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800 border border-teal-200">📁 Map (1–7)</span>
+        `;
+        if (mobileSummaryText) {
+          mobileSummaryText.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-sm bg-red-600 mr-1 align-middle"></span><strong>Luar Merah:</strong> Lilin, Tas, Map (1–7)';
+        }
+      }
+    }
+
+    function switchMode(mode) {
+      if (currentMode === mode) return;
+      currentMode = mode;
+
+      const btnEss = document.getElementById('btn-essential');
+      const btnNon = document.getElementById('btn-non-essential');
+
+      if (mode === 'essential') {
+        btnEss.className = 'py-1.5 sm:py-2 px-2.5 rounded-lg text-xs font-bold transition-all duration-200 bg-argon-primary text-white shadow-argon-btn flex flex-col items-center';
+        btnNon.className = 'py-1.5 sm:py-2 px-2.5 rounded-lg text-xs font-bold transition-all duration-200 text-argon-default hover:bg-white/60 flex flex-col items-center';
+      } else {
+        btnNon.className = 'py-1.5 sm:py-2 px-2.5 rounded-lg text-xs font-bold transition-all duration-200 bg-argon-primary text-white shadow-argon-btn flex flex-col items-center';
+        btnEss.className = 'py-1.5 sm:py-2 px-2.5 rounded-lg text-xs font-bold transition-all duration-200 text-argon-default hover:bg-white/60 flex flex-col items-center';
+      }
+
+      closeInspector();
+      buildOrganizerModel(currentMode);
+    }
+
+    // ==========================================
+    // TOOLBAR ACTIONS & ANIMATION TARGETS
+    // ==========================================
+    function updateExplosionAndVisibility() {
+      if (!boxGroup) return;
+      boxGroup.children.forEach(mesh => {
+        if (mesh.userData.isPaper) {
+          // Sembunyikan tumpukan kertas saat mode Bongkar (Pola Potongan) aktif agar kepingan kardus terlihat jelas
+          mesh.visible = showPapers && !isExploded;
+        }
+        if (isExploded) {
+          mesh.userData.targetPos.copy(mesh.userData.flatPos);
+          mesh.userData.targetQuat.copy(mesh.userData.flatQuat);
+        } else {
+          mesh.userData.targetPos.copy(mesh.userData.basePos);
+          mesh.userData.targetQuat.copy(mesh.userData.baseQuat);
+        }
+      });
+
+      // Sematkan visibilitas penggaris dimensi 3D vs label pola potongan
+      if (dimLinesGroup) {
+        dimLinesGroup.visible = showDimensionLabels && !isExploded;
+      }
+      document.getElementById('labels-container').style.opacity = (showDimensionLabels && !isExploded) ? '1' : '0';
+    }
+
+    function animateCameraTo(posVec, lookAtVec) {
+      cameraAnim.targetPos.copy(posVec);
+      cameraAnim.targetLookAt.copy(lookAtVec);
+      cameraAnim.active = true;
+    }
+
+    function toggleExplode() {
+      isExploded = !isExploded;
+      const btn = document.getElementById('btn-explode');
+      const txt = document.getElementById('txt-explode');
+      txt.innerText = isExploded ? 'Rakit Kembali' : 'Bongkar (Potongan)';
+      btn.classList.toggle('bg-indigo-50', isExploded);
+      btn.classList.toggle('border-argon-primary', isExploded);
+
+      if (isExploded && selectedMesh && selectedMesh.userData.isPaper) {
+        closeInspector();
+      }
+
+      updateExplosionAndVisibility();
+
+      // Transisi kamera otomatis ke tampak atas saat "Bongkar" diaktifkan agar semua potongan kardus terlihat dari atas
+      const isMobile = window.innerWidth < 768;
+      if (isExploded) {
+        const zCenter = currentMode === 'essential' ? 12 : 16;
+        const camHeight = isMobile ? 135 : 102;
+        animateCameraTo(
+          new THREE.Vector3(0, camHeight, zCenter + 6),
+          new THREE.Vector3(0, -3.8, zCenter)
+        );
+      } else {
+        setCameraView('iso');
+      }
+    }
+
+    function togglePapers() {
+      showPapers = !showPapers;
+      document.getElementById('txt-papers').innerText = showPapers ? 'Kertas: ON' : 'Kertas: OFF';
+      if (!showPapers && selectedMesh && selectedMesh.userData.isPaper) {
+        closeInspector();
+      }
+      updateExplosionAndVisibility();
+    }
+
+    function toggleLabels() {
+      showDimensionLabels = !showDimensionLabels;
+      document.getElementById('txt-labels').innerText = showDimensionLabels ? 'Ukuran: ON' : 'Ukuran: OFF';
+      updateExplosionAndVisibility();
+    }
+
+    function setCameraView(preset) {
+      const isMobile = window.innerWidth < 768;
+      const distMult = isMobile ? 1.38 : 1.0;
+      const zTarget = isExploded ? (currentMode === 'essential' ? 12 : 16) : 0;
+      const yTarget = isExploded ? -3.8 : (isMobile ? 2.5 : 0);
+
+      if (preset === 'iso') {
+        animateCameraTo(
+          new THREE.Vector3(32 * distMult, 32 * distMult, 42 * distMult + zTarget),
+          new THREE.Vector3(0, yTarget, zTarget)
+        );
+      } else if (preset === 'top') {
+        const h = isExploded ? (isMobile ? 135 : 102) : (58 * distMult);
+        animateCameraTo(
+          new THREE.Vector3(0, h, zTarget + 0.05),
+          new THREE.Vector3(0, yTarget, zTarget)
+        );
+      } else if (preset === 'front') {
+        animateCameraTo(
+          new THREE.Vector3(0, 16 * distMult, 50 * distMult + zTarget),
+          new THREE.Vector3(0, yTarget, zTarget)
+        );
+      } else if (preset === 'bottom') {
+        const hBot = isExploded ? -105 : (-52 * distMult);
+        animateCameraTo(
+          new THREE.Vector3(0, hBot, zTarget + 12),
+          new THREE.Vector3(0, yTarget, zTarget)
+        );
+      }
+    }
+
+    function resetCamera() {
+      setCameraView(isExploded ? 'top' : 'iso');
+    }
+
+    // ==========================================
+    // RAYCASTING & PART INSPECTION POPUP
+    // ==========================================
+    function setMeshHighlight(mesh, highlighted) {
+      if (!mesh || !mesh.material) return;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach(m => {
+        if (!m.emissive) m.emissive = new THREE.Color(0x000000);
+        m.emissive.setHex(highlighted ? 0x3b4cca : 0x000000);
+        m.emissiveIntensity = highlighted ? 0.35 : 0;
+      });
+    }
+
+    function selectPart(mesh) {
+      if (selectedMesh) setMeshHighlight(selectedMesh, false);
+      selectedMesh = mesh;
+
+      if (!selectedMesh) return;
+      setMeshHighlight(selectedMesh, true);
+
+      const d = selectedMesh.userData;
+      document.getElementById('insp-badge').innerText = d.badge || 'BAGIAN KARDUS';
+      document.getElementById('insp-title').innerText = d.name;
+      document.getElementById('insp-dims').innerText = d.dimensions;
+      document.getElementById('insp-spec').innerText = d.spec;
+      document.getElementById('insp-role').innerText = d.role;
+      document.getElementById('insp-desc').innerText = d.description;
+      document.getElementById('insp-cap').innerText = d.capacity;
+
+      const card = document.getElementById('inspector-card');
+      card.classList.remove('translate-y-6', 'opacity-0', 'pointer-events-none');
+      card.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+    }
+
+    function closeInspector() {
+      if (selectedMesh) setMeshHighlight(selectedMesh, false);
+      selectedMesh = null;
+      const card = document.getElementById('inspector-card');
+      card.classList.add('translate-y-6', 'opacity-0', 'pointer-events-none');
+      card.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+    }
+
+    // Distinguish clean click/tap from camera orbit drag
+    let pointerDownPos = { x: 0, y: 0 };
+    window.addEventListener('pointerdown', (e) => {
+      pointerDownPos.x = e.clientX;
+      pointerDownPos.y = e.clientY;
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (e.target.closest('aside') || e.target.closest('#inspector-card') || e.target.closest('button')) {
+        return;
+      }
+      const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (dist > 6) return; // User was rotating/dragging camera
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const clickable = interactiveMeshes.filter(m => m.visible);
+      const hits = raycaster.intersectObjects(clickable, false);
+
+      if (hits.length > 0) {
+        selectPart(hits[0].object);
+      } else {
+        closeInspector();
+      }
+    });
+
+    // Update 2D floating dimension badges position from 3D world coords
+    function updateFloatingLabels() {
+      // 1. Update Assembled Box Rulers
+      if (showDimensionLabels && !isExploded) {
+        const pairs = [
+          { id: 'lbl-length', pos: labelAnchors.length },
+          { id: 'lbl-width', pos: labelAnchors.width },
+          { id: 'lbl-height', pos: labelAnchors.height }
+        ];
+
+        pairs.forEach(item => {
+          const el = document.getElementById(item.id);
+          const v = item.pos.clone().project(camera);
+          if (v.z > 1) {
+            el.style.opacity = '0';
+            return;
+          }
+          const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+          const y = (-(v.y * 0.5) + 0.5) * window.innerHeight;
+          el.style.opacity = '1';
+          el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+        });
+      }
+
+      // 2. Update Flat-Pack Cutout Badges when "Bongkar" is active
+      cutoutLabelItems.forEach(item => {
+        if (!isExploded || !showDimensionLabels) {
+          item.el.style.opacity = '0';
+          return;
+        }
+        const worldPos = item.mesh.position.clone();
+        worldPos.y += 0.6;
+        const v = worldPos.project(camera);
+        if (v.z > 1) {
+          item.el.style.opacity = '0';
+          return;
+        }
+        const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-(v.y * 0.5) + 0.5) * window.innerHeight;
+        item.el.style.opacity = '1';
+        item.el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+      });
+    }
+
+    // ==========================================
+    // THREE.JS SCENE INITIALIZATION
+    // ==========================================
+    function initScene() {
+      const canvas = document.getElementById('canvas3d');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf8f9fe); // Impeccable Argon Alabaster/White
+
+      const isMobile = window.innerWidth < 768;
+      const distMult = isMobile ? 1.38 : 1.0;
+
+      camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 1, 500);
+      camera.position.set(32 * distMult, 32 * distMult, 42 * distMult);
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      // Allow full 360-degree vertical rotation so user can freely inspect the bottom base
+      controls.minPolarAngle = 0;
+      controls.maxPolarAngle = Math.PI;
+      controls.minDistance = 18;
+      controls.maxDistance = 220;
+      controls.target.set(0, isMobile ? 2.5 : 0, 0);
+      controls.update();
+
+      // Stop auto camera transition if user manually drags/rotates canvas
+      renderer.domElement.addEventListener('pointerdown', () => {
+        cameraAnim.active = false;
+      });
+      renderer.domElement.addEventListener('wheel', () => {
+        cameraAnim.active = false;
+      }, { passive: true });
+
+      // Bright Clean Studio Lighting (Top + Bottom Uplight so underside is well-lit)
+      const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+      scene.add(ambient);
+
+      const keyLight = new THREE.DirectionalLight(0xffffff, 0.75);
+      keyLight.position.set(28, 52, 32);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      keyLight.shadow.camera.near = 10;
+      keyLight.shadow.camera.far = 130;
+      const d = 32;
+      keyLight.shadow.camera.left = -d;
+      keyLight.shadow.camera.right = d;
+      keyLight.shadow.camera.top = d;
+      keyLight.shadow.camera.bottom = -d;
+      keyLight.shadow.bias = -0.0005;
+      scene.add(keyLight);
+
+      const fillLight = new THREE.DirectionalLight(0xe0e7ff, 0.45);
+      fillLight.position.set(-35, 25, -25);
+      scene.add(fillLight);
+
+      // Bottom studio reflector light so the underside of the base is clearly visible
+      const bottomLight = new THREE.DirectionalLight(0xffffff, 0.55);
+      bottomLight.position.set(0, -45, 15);
+      scene.add(bottomLight);
+
+      // Subtle floating reference grid that doesn't block looking from underneath
+      studioGrid = new THREE.GridHelper(140, 35, 0xdbe2ef, 0xeef2f8);
+      studioGrid.position.y = -4.05;
+      studioGrid.material.transparent = true;
+      studioGrid.material.opacity = 0.45;
+      scene.add(studioGrid);
+
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      buildOrganizerModel(currentMode);
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Smooth lerp for position & rotation (Flat-Pack Cutout vs Assembled Box)
+      if (boxGroup) {
+        boxGroup.children.forEach(mesh => {
+          if (mesh.userData.targetPos) {
+            mesh.position.lerp(mesh.userData.targetPos, 0.11);
+          }
+          if (mesh.userData.targetQuat) {
+            mesh.quaternion.slerp(mesh.userData.targetQuat, 0.11);
+          }
+        });
+      }
+
+      // Smooth camera transition when switching between Bongkar (Flat Top View) and Rakit
+      if (cameraAnim.active) {
+        camera.position.lerp(cameraAnim.targetPos, 0.1);
+        controls.target.lerp(cameraAnim.targetLookAt, 0.1);
+        if (
+          camera.position.distanceTo(cameraAnim.targetPos) < 0.25 &&
+          controls.target.distanceTo(cameraAnim.targetLookAt) < 0.25
+        ) {
+          cameraAnim.active = false;
+        }
+      }
+
+      controls.update();
+      updateFloatingLabels();
+      renderer.render(scene, camera);
+    }
+
+    window.onload = initScene;
+  </script>
+</body>
+</html>
